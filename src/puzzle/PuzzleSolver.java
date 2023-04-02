@@ -15,7 +15,7 @@ public class PuzzleSolver {
     private PuzzleState goalState;
 
     private PriorityQueue<PuzzleState> openList;
-    private LinkedList<PuzzleState> closedList;
+    private HashSet<PuzzleState> closedList;
     private LinkedList<PuzzleAction> solution;
 
     private boolean solved = false;
@@ -189,19 +189,18 @@ public class PuzzleSolver {
         // Equals
         @Override
         public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
             PuzzleState that = (PuzzleState) o;
-            if (incorrectCount != that.incorrectCount || estimatedCount != that.estimatedCount) {
-                return false;
-            }
+            return incorrectCount == that.incorrectCount && estimatedCount == that.estimatedCount && Arrays.deepEquals(board, that.board);
+        }
 
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    if (board[i][j] != that.board[i][j])
-                        return false;
-                }
-            }
-
-            return true;
+        // Hash code
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(incorrectCount, estimatedCount);
+            result = 31 * result + Arrays.deepHashCode(board);
+            return result;
         }
 
         // Is goal
@@ -279,7 +278,7 @@ public class PuzzleSolver {
         initialState = new PuzzleState(initialBoard, true);
 
         openList = new PriorityQueue<>(new PuzzleStateComparator());
-        closedList = new LinkedList<>();
+        closedList = new HashSet<>();
         solution = new LinkedList<>();
     }
 
