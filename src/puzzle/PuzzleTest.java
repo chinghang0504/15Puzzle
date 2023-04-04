@@ -1,6 +1,7 @@
 package puzzle;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class PuzzleTest {
     private static final String directoryName = "testcases";
@@ -20,7 +21,7 @@ public class PuzzleTest {
             double timeTaken = (double) (end - start) / 1000;
 
             System.out.println("File Name: " + fileName);
-            puzzleSolver.printStats();
+            System.out.print(puzzleSolver.getStats());
             System.out.println("Time Taken: " + timeTaken);
             System.out.println("");
         }

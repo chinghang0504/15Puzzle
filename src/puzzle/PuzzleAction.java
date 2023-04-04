@@ -1,22 +1,19 @@
 package puzzle;
 
-// Puzzle Action
-public class PuzzleAction {
+class PuzzleAction {
 
     private int tile;
-    private int direction;
-
-    private static final char[] DIRECTION_WORDS = { 'U', 'D', 'L', 'R' };
+    private PuzzleDirection puzzleDirection;
 
     // Constructor
-    public PuzzleAction(int tile, int direction) {
+    public PuzzleAction(int tile, PuzzleDirection puzzleDirection) {
         this.tile = tile;
-        this.direction = direction;
+        this.puzzleDirection = puzzleDirection;
     }
 
     // To string
     @Override
     public String toString() {
-        return tile + " " + DIRECTION_WORDS[direction];
+        return tile + " " + puzzleDirection;
     }
 }

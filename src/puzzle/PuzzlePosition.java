@@ -1,12 +1,9 @@
 package puzzle;
 
-// Puzzle Position
-public class PuzzlePosition {
+class PuzzlePosition {
 
-    int row;
-    int col;
-
-    static final int DIRECTION_SIZE = 4;
+    public final int row;
+    public final int col;
 
     // Constructor
     public PuzzlePosition(int row, int col) {
@@ -15,21 +12,30 @@ public class PuzzlePosition {
     }
 
     // Get the next puzzle position
-    public PuzzlePosition getNext(int direction) {
-        if (direction == 0) {
-            // Up
-            return new PuzzlePosition(row-1, col);
-        } else if (direction == 1) {
-            // Down
-            return new PuzzlePosition(row+1, col);
-        } else if (direction == 2) {
-            // Left
-            return new PuzzlePosition(row, col-1);
-        } else if (direction == 3) {
-            // Right
-            return new PuzzlePosition(row, col+1);
+    public PuzzlePosition getNextPuzzlePosition(PuzzleDirection puzzleDirection) {
+        switch (puzzleDirection) {
+            case UP:
+                return new PuzzlePosition(row-1, col);
+            case DOWN:
+                return new PuzzlePosition(row+1, col);
+            case LEFT:
+                return new PuzzlePosition(row, col-1);
+            case RIGHT:
+                return new PuzzlePosition(row, col+1);
+            default:
+                return null;
+        }
+    }
+
+    // Is valid puzzle position
+    public boolean isValid(int order) {
+        if (row < 0 || row >= order) {
+            return false;
+        }
+        if (col < 0 || col >= order) {
+            return false;
         }
 
-        return null;
+        return true;
     }
 }

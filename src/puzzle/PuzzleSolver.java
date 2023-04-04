@@ -1,281 +1,48 @@
 package puzzle;
 
-import puzzle.exceptions.BadBoardException;
-import puzzle.exceptions.BadSizeException;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import puzzle.PuzzleException.*;
 
-// Puzzle Solver
 public class PuzzleSolver {
 
-    private int size;
     private PuzzleState initialState;
-    private PuzzleState goalState;
 
     private PriorityQueue<PuzzleState> openList;
     private HashSet<PuzzleState> closedList;
     private LinkedList<PuzzleAction> solution;
 
-    private boolean solved = false;
-    private boolean foundSolution = false;
+    private boolean solved;
+    private boolean foundSolution;
 
-    // Puzzle State
-    private class PuzzleState {
-
-        int[][] board;
-        int incorrectCount;
-        int estimatedCount;
-
-        PuzzleState prevPuzzleState;
-        PuzzleAction prevPuzzleAction;
-
-        // Constructor (Initial State and Goal State)
-        PuzzleState(int[][] board, boolean update) {
-            this.board = board;
-
-            if (update) {
-                updateIncorrectCount();
-                updateEstimatedCount();
-            }
-        }
-
-        // Constructor (Next State)
-        PuzzleState(PuzzleState origin, PuzzlePosition target, PuzzlePosition next, int direction) {
-            board = new int[size][size];
-
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    board[i][j] = origin.board[i][j];
-                }
-            }
-
-            int targetTile = origin.board[target.row][target.col];
-            int nextTile = origin.board[next.row][next.col];
-            board[next.row][next.col] = targetTile;
-            board[target.row][target.col] = nextTile;
-
-            prevPuzzleState = origin;
-            if (direction == 0) {
-                prevPuzzleAction = new PuzzleAction(nextTile, 1);
-            } else if (direction == 1) {
-                prevPuzzleAction = new PuzzleAction(nextTile, 0);
-            } else if (direction == 2) {
-                prevPuzzleAction = new PuzzleAction(nextTile, 3);
-            } else if (direction == 3) {
-                prevPuzzleAction = new PuzzleAction(nextTile, 2);
-            }
-
-            updateIncorrectCount();
-            updateEstimatedCount();
-        }
-
-        // Update the incorrect count
-        void updateIncorrectCount() {
-            incorrectCount = 0;
-
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    if (board[i][j] != size * size) {
-                        if (board[i][j] != goalState.board[i][j]) {
-                            incorrectCount++;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Update the estimated count
-        void updateEstimatedCount() {
-            estimatedCount = 0;
-
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    if (board[i][j] != size * size) {
-                        PuzzlePosition target = goalState.getTarget(board[i][j]);
-                        estimatedCount += Math.abs(target.row - i) + Math.abs(target.col - j);
-                    }
-                }
-            }
-        }
-
-        // Get the target puzzle position
-        PuzzlePosition getTarget(int target) {
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    if (board[i][j] == target) {
-                        return new PuzzlePosition(i, j);
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        // Get the total cost
-        int getTotalCost() {
-            return incorrectCount + estimatedCount;
-        }
-
-        // Get the board
-        String getBoard() {
-            String output = "";
-
-            for (int i = 0; i < size; i++) {
-                output += tileToString(board[i][0]);
-                for (int j = 1; j < size; j++) {
-                    output += " " + tileToString(board[i][j]);
-                }
-                output += "\n";
-            }
-
-            return output;
-        }
-
-        // Print the board
-        void printBoard() {
-            System.out.print(getBoard());
-        }
-
-        // Convert tile to string
-        String tileToString(int tile) {
-            if (tile == size * size) {
-                return "  ";
-            }
-
-            String output = String.valueOf(tile);
-            if (output.length() == 1) {
-                output = " " + output;
-            }
-
-            return output;
-        }
-
-        // Get the info
-        String getInfo() {
-            String output = "Incorrect Count: " + incorrectCount + "\n";
-            output += "Estimated Count: " + estimatedCount + "\n";
-            output += "Total Cost: " + getTotalCost() + "\n";
-
-            if (prevPuzzleState != null) {
-                output += "Previous Puzzle State: " + Integer.toHexString(prevPuzzleState.hashCode()) + "\n";
-            } else {
-                output += "Previous Puzzle State: " + null + "\n";
-            }
-
-            output += "Previous Action: " + prevPuzzleAction + "\n";
-            return output;
-        }
-
-        // Print the info
-        void printInfo() {
-            System.out.print(getInfo());
-        }
-
-        // Get all the information
-        String getAllInfo() {
-            String output = "Puzzle State: " + Integer.toHexString(hashCode()) + "\n";
-            output += getBoard();
-            output += getInfo();
-            return output;
-        }
-
-        // Print all the information
-        void printAllInfo() {
-            System.out.print(getAllInfo());
-        }
-
-        // Equals
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PuzzleState that = (PuzzleState) o;
-            return incorrectCount == that.incorrectCount && estimatedCount == that.estimatedCount && Arrays.deepEquals(board, that.board);
-        }
-
-        // Hash code
-        @Override
-        public int hashCode() {
-            int result = Objects.hash(incorrectCount, estimatedCount);
-            result = 31 * result + Arrays.deepHashCode(board);
-            return result;
-        }
-
-        // Is goal
-        boolean isGoal() {
-            return equals(goalState);
-        }
-
-        // Get neighbours
-        LinkedList<PuzzleState> getNeighbours() {
-            LinkedList<PuzzleState> neighbours = new LinkedList<>();
-            PuzzlePosition target = getTarget(size * size);
-
-            for (int i = 0; i < PuzzlePosition.DIRECTION_SIZE; i++) {
-                PuzzlePosition next = target.getNext(i);
-                if (checkPuzzlePosition(next)) {
-                    neighbours.add(new PuzzleState(this, target, next, i));
-                }
-            }
-
-            return neighbours;
-        }
-
-        // Check puzzle position
-        boolean checkPuzzlePosition(PuzzlePosition puzzlePosition) {
-            if (puzzlePosition.row < 0 || puzzlePosition.row >= size) {
-                return false;
-            } else if (puzzlePosition.col < 0 || puzzlePosition.col >= size) {
-                return false;
-            }
-
-            return true;
-        }
-    }
-
-    // Puzzle State Comparator
     private class PuzzleStateComparator implements Comparator<PuzzleState> {
 
         // Compare
         @Override
         public int compare(PuzzleState o1, PuzzleState o2) {
-            if (o1.getTotalCost() < o2.getTotalCost()) {
+            if (o1.getEstimatedCost() < o2.getEstimatedCost()) {
                 return -1;
-            } else if (o1.getTotalCost() > o2.getTotalCost()) {
+            } else if (o1.getEstimatedCost() > o2.getEstimatedCost()) {
                 return 1;
-            } else if (o1.estimatedCount < o2.estimatedCount) {
-                return -1;
-            } else if (o1.estimatedCount > o2.estimatedCount) {
-                return 1;
+            } else {
+                return 0;
             }
-
-            return 0;
         }
     }
 
     // Constructor
     public PuzzleSolver(String fileName) {
-        int[][] goalBoard = null;
-        int[][] initialBoard = null;
+        int[][] initialBoard;
 
-        try {
-            Scanner scanner = loadPuzzleFile(fileName);
+        Scanner scanner = loadPuzzleFile(fileName);
 
-            loadPuzzleSize(scanner);
-            checkPuzzleSize();
+        int order = loadPuzzleOrder(scanner);
+        checkPuzzleOrder(order);
 
-            goalBoard = generateGoalBoard();
-            initialBoard = loadPuzzleBoard(scanner);
-            checkPuzzleBoard(initialBoard);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
-
-        goalState = new PuzzleState(goalBoard, false);
-        initialState = new PuzzleState(initialBoard, true);
+        initialBoard = loadPuzzleBoard(scanner, order);
+        checkPuzzleBoard(initialBoard, order);
+        initialState = new PuzzleState(initialBoard);
 
         openList = new PriorityQueue<>(new PuzzleStateComparator());
         closedList = new HashSet<>();
@@ -283,64 +50,55 @@ public class PuzzleSolver {
     }
 
     // Load the puzzle file
-    private Scanner loadPuzzleFile(String fileName) throws FileNotFoundException {
+    private Scanner loadPuzzleFile(String fileName) {
         File file = new File(fileName);
-        return new Scanner(file);
+
+        try {
+            return new Scanner(file);
+        } catch (FileNotFoundException e) {
+            throw new BadFileException(fileName + " (The system cannot find the puzzle file)");
+        }
     }
 
-    // Load the puzzle size
-    private void loadPuzzleSize(Scanner scanner) throws BadSizeException {
+    // Load the puzzle order
+    private int loadPuzzleOrder(Scanner scanner) {
         String line = null;
         try {
             line = scanner.nextLine();
-            size = Integer.valueOf(line);
+            return Integer.valueOf(line);
         } catch (NoSuchElementException e) {
-            throw new BadSizeException("The system cannot find the puzzle size");
+            throw new BadOrderException("The system cannot find the puzzle order");
         } catch (NumberFormatException e) {
-            throw new BadSizeException(line + " (Invalid puzzle size)");
+            throw new BadOrderException(line + " (Invalid puzzle order)");
         }
     }
 
-    // Check the puzzle size
-    private void checkPuzzleSize() throws BadSizeException {
-        if (size < 2) {
-            throw new BadSizeException("The puzzle size cannot be less than 2");
+    // Check the puzzle order
+    private void checkPuzzleOrder(int order) {
+        if (order < 2) {
+            throw new BadOrderException("The puzzle order cannot be less than 2");
         }
-    }
-
-    // Generate a goal board
-    private int[][] generateGoalBoard() {
-        int[][] board = new int[size][size];
-
-        int tile = 1;
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                board[i][j] = tile++;
-            }
-        }
-
-        return board;
     }
 
     // Load the puzzle board
-    private int[][] loadPuzzleBoard(Scanner scanner) throws BadBoardException {
-        int[][] board = new int[size][size];
+    private int[][] loadPuzzleBoard(Scanner scanner, int order) {
+        int[][] board = new int[order][order];
         String tileString = null;
 
         try {
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < order; i++) {
                 String line = scanner.nextLine();
-                for (int j = 0; j < size; j++) {
+                for (int j = 0; j < order; j++) {
                     int begin = j * 3;
                     int end = begin + 2;
                     tileString = line.substring(begin, end).replaceAll(" ", "");
-                    board[i][j] = tileString.isEmpty() ? size * size : Integer.valueOf(tileString);
+                    board[i][j] = tileString.isEmpty() ? order * order : Integer.valueOf(tileString);
                 }
             }
         } catch (NoSuchElementException e) {
-            throw new BadBoardException("There must be " + size + " rows of tiles");
+            throw new BadBoardException("There must be " + order + " rows of tiles");
         } catch (IndexOutOfBoundsException e) {
-            throw new BadBoardException("There must be " + size + " tiles in a row");
+            throw new BadBoardException("There must be " + order + " tiles in a row");
         } catch (NumberFormatException e) {
             throw new BadBoardException(tileString + " (Invalid tile)");
         }
@@ -349,20 +107,21 @@ public class PuzzleSolver {
     }
 
     // Check the puzzle board
-    private void checkPuzzleBoard(int[][] board) throws BadBoardException {
-        int totalSize = size * size;
-        int[] tileCounts = new int[totalSize];
+    private void checkPuzzleBoard(int[][] board, int order) {
+        int maxTile = order * order;
+        int[] tileCounts = new int[maxTile];
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (board[i][j] < 1 || board[i][j] > totalSize) {
+        for (int i = 0; i < order; i++) {
+            for (int j = 0; j < order; j++) {
+                if (board[i][j] < 1 || board[i][j] > maxTile) {
                     throw new BadBoardException(board[i][j] + " (This tile is invalid)");
                 }
+
                 tileCounts[board[i][j] - 1]++;
             }
         }
 
-        for (int i = 0; i < totalSize - 1; i++) {
+        for (int i = 0; i < maxTile - 1; i++) {
             if (tileCounts[i] < 1) {
                 throw new BadBoardException((i + 1) + " (This tile is missing)");
             } else if (tileCounts[i] > 1) {
@@ -401,7 +160,7 @@ public class PuzzleSolver {
             }
 
             // Generate neighbours
-            LinkedList<PuzzleState> neighbours = currPuzzleState.getNeighbours();
+            ArrayList<PuzzleState> neighbours = currPuzzleState.getNeighbours();
             for (PuzzleState neighbour: neighbours) {
                 if (!closedList.contains(neighbour) && !openList.contains(neighbour)) {
                     openList.add(neighbour);
@@ -412,48 +171,36 @@ public class PuzzleSolver {
 
     // Save the solution
     private void saveSolution(PuzzleState puzzleState) {
-        while (puzzleState.prevPuzzleState != null) {
-            solution.addFirst(puzzleState.prevPuzzleAction);
-            puzzleState = puzzleState.prevPuzzleState;
+        while (puzzleState.getPrevPuzzleState() != null) {
+            solution.addFirst(puzzleState.getPrevPuzzleAction());
+            puzzleState = puzzleState.getPrevPuzzleState();
         }
     }
 
     // Get the solution
     public String getSolution() {
-        String output = null;
-
         if (!solved) {
-            output = "This puzzle is not solved yet\n";
+            return "This puzzle is not solved yet\n";
         } else if (solution.size() == 0) {
             if (foundSolution) {
-                output = "The initial state is the goal state\n";
+                return "The initial state is the goal state\n";
             } else {
-                output = "This puzzle is no solution\n";
+                return "This puzzle is no solution\n";
             }
         } else {
-            output = "";
+            String output = "";
             for (PuzzleAction puzzleAction: solution) {
                 output += puzzleAction + "\n";
             }
+            return output;
         }
-
-        return output;
-    }
-
-    // Print the solution
-    public void printSolution() {
-        System.out.print(getSolution());
     }
 
     // Get the stats
     public String getStats() {
         String output = "Open List Size: " + openList.size() + "\n";
         output += "Closed List Size: " + closedList.size() + "\n";
+        output += "Solution Size: " + solution.size() + "\n";
         return output;
-    }
-
-    // Print the stats
-    public void printStats() {
-        System.out.print(getStats());
     }
 }
