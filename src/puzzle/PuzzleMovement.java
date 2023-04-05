@@ -1,12 +1,12 @@
 package puzzle;
 
-class PuzzleAction {
+class PuzzleMovement {
 
     private int tile;
     private PuzzleDirection puzzleDirection;
 
     // Constructor
-    public PuzzleAction(int tile, PuzzleDirection puzzleDirection) {
+    public PuzzleMovement(int tile, PuzzleDirection puzzleDirection) {
         this.tile = tile;
         this.puzzleDirection = puzzleDirection;
     }

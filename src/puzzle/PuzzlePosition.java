@@ -28,11 +28,11 @@ class PuzzlePosition {
     }
 
     // Is valid puzzle position
-    public boolean isValid(int order) {
-        if (row < 0 || row >= order) {
+    public boolean isValidPuzzlePosition(int dimension) {
+        if (row < 0 || row >= dimension) {
             return false;
         }
-        if (col < 0 || col >= order) {
+        if (col < 0 || col >= dimension) {
             return false;
         }
 

@@ -5,13 +5,13 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import puzzle.PuzzleException.*;
 
-public class PuzzleSolver {
+public class PuzzleSolver implements Runnable {
 
     private PuzzleState initialState;
 
     private PriorityQueue<PuzzleState> openList;
     private HashSet<PuzzleState> closedList;
-    private LinkedList<PuzzleAction> solution;
+    private LinkedList<PuzzleMovement> solution;
 
     private boolean solved;
     private boolean foundSolution;
@@ -33,20 +33,14 @@ public class PuzzleSolver {
 
     // Constructor
     public PuzzleSolver(String fileName) {
-        int[][] initialBoard;
-
         Scanner scanner = loadPuzzleFile(fileName);
 
-        int order = loadPuzzleOrder(scanner);
-        checkPuzzleOrder(order);
+        int dimension = loadPuzzleDimension(scanner);
+        checkPuzzleDimension(dimension);
 
-        initialBoard = loadPuzzleBoard(scanner, order);
-        checkPuzzleBoard(initialBoard, order);
+        int[][] initialBoard = loadPuzzleBoard(scanner, dimension);
+        checkPuzzleBoard(initialBoard, dimension);
         initialState = new PuzzleState(initialBoard);
-
-        openList = new PriorityQueue<>(new PuzzleStateComparator());
-        closedList = new HashSet<>();
-        solution = new LinkedList<>();
     }
 
     // Load the puzzle file
@@ -60,45 +54,45 @@ public class PuzzleSolver {
         }
     }
 
-    // Load the puzzle order
-    private int loadPuzzleOrder(Scanner scanner) {
+    // Load the puzzle dimension
+    private int loadPuzzleDimension(Scanner scanner) {
         String line = null;
         try {
             line = scanner.nextLine();
             return Integer.valueOf(line);
         } catch (NoSuchElementException e) {
-            throw new BadOrderException("The system cannot find the puzzle order");
+            throw new BadDimensionException("The system cannot find the puzzle dimension");
         } catch (NumberFormatException e) {
-            throw new BadOrderException(line + " (Invalid puzzle order)");
+            throw new BadDimensionException(line + " (Invalid puzzle dimension)");
         }
     }
 
-    // Check the puzzle order
-    private void checkPuzzleOrder(int order) {
-        if (order < 2) {
-            throw new BadOrderException("The puzzle order cannot be less than 2");
+    // Check the puzzle dimension
+    private void checkPuzzleDimension(int dimension) {
+        if (dimension < 2) {
+            throw new BadDimensionException("The puzzle dimension cannot be less than 2");
         }
     }
 
     // Load the puzzle board
-    private int[][] loadPuzzleBoard(Scanner scanner, int order) {
-        int[][] board = new int[order][order];
+    private int[][] loadPuzzleBoard(Scanner scanner, int dimension) {
+        int[][] board = new int[dimension][dimension];
         String tileString = null;
 
         try {
-            for (int i = 0; i < order; i++) {
+            for (int i = 0; i < dimension; i++) {
                 String line = scanner.nextLine();
-                for (int j = 0; j < order; j++) {
+                for (int j = 0; j < dimension; j++) {
                     int begin = j * 3;
                     int end = begin + 2;
                     tileString = line.substring(begin, end).replaceAll(" ", "");
-                    board[i][j] = tileString.isEmpty() ? order * order : Integer.valueOf(tileString);
+                    board[i][j] = tileString.isEmpty() ? dimension * dimension : Integer.valueOf(tileString);
                 }
             }
         } catch (NoSuchElementException e) {
-            throw new BadBoardException("There must be " + order + " rows of tiles");
+            throw new BadBoardException("There must be " + dimension + " rows of tiles");
         } catch (IndexOutOfBoundsException e) {
-            throw new BadBoardException("There must be " + order + " tiles in a row");
+            throw new BadBoardException("There must be " + dimension + " tiles in a row");
         } catch (NumberFormatException e) {
             throw new BadBoardException(tileString + " (Invalid tile)");
         }
@@ -107,12 +101,12 @@ public class PuzzleSolver {
     }
 
     // Check the puzzle board
-    private void checkPuzzleBoard(int[][] board, int order) {
-        int maxTile = order * order;
+    private void checkPuzzleBoard(int[][] board, int dimension) {
+        int maxTile = dimension * dimension;
         int[] tileCounts = new int[maxTile];
 
-        for (int i = 0; i < order; i++) {
-            for (int j = 0; j < order; j++) {
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
                 if (board[i][j] < 1 || board[i][j] > maxTile) {
                     throw new BadBoardException(board[i][j] + " (This tile is invalid)");
                 }
@@ -136,10 +130,20 @@ public class PuzzleSolver {
             return;
         }
 
+        // Initialize
+        openList = new PriorityQueue<>(new PuzzleStateComparator());
+        closedList = new HashSet<>();
+        solution = new LinkedList<>();
+
         // Add the initial state into the open list
         openList.add(initialState);
 
         while (true) {
+            // Check interrupted
+            if (Thread.interrupted()) {
+                return;
+            }
+
             // Get the current state from the open list
             PuzzleState currPuzzleState = openList.poll();
             if (currPuzzleState == null) {
@@ -162,7 +166,27 @@ public class PuzzleSolver {
             // Generate neighbours
             ArrayList<PuzzleState> neighbours = currPuzzleState.getNeighbours();
             for (PuzzleState neighbour: neighbours) {
-                if (!closedList.contains(neighbour) && !openList.contains(neighbour)) {
+                // Check in the closed list
+                if (closedList.contains(neighbour)) {
+                    continue;
+                }
+
+                // Check in the open list
+                boolean addNeighbour = true;
+                Iterator<PuzzleState> puzzleStateIterator = openList.iterator();
+                while (puzzleStateIterator.hasNext()) {
+                    PuzzleState puzzleState = puzzleStateIterator.next();
+                    if (puzzleState.isSameBoard(neighbour)) {
+                        if (puzzleState.getStepCount() <= neighbour.getStepCount()) {
+                            addNeighbour = false;
+                        } else {
+                            puzzleStateIterator.remove();
+                        }
+                        break;
+                    }
+                }
+
+                if (addNeighbour) {
                     openList.add(neighbour);
                 }
             }
@@ -172,7 +196,7 @@ public class PuzzleSolver {
     // Save the solution
     private void saveSolution(PuzzleState puzzleState) {
         while (puzzleState.getPrevPuzzleState() != null) {
-            solution.addFirst(puzzleState.getPrevPuzzleAction());
+            solution.addFirst(puzzleState.getPrevPuzzleMovement());
             puzzleState = puzzleState.getPrevPuzzleState();
         }
     }
@@ -189,8 +213,8 @@ public class PuzzleSolver {
             }
         } else {
             String output = "";
-            for (PuzzleAction puzzleAction: solution) {
-                output += puzzleAction + "\n";
+            for (PuzzleMovement puzzleMovement: solution) {
+                output += puzzleMovement + "\n";
             }
             return output;
         }
@@ -202,5 +226,31 @@ public class PuzzleSolver {
         output += "Closed List Size: " + closedList.size() + "\n";
         output += "Solution Size: " + solution.size() + "\n";
         return output;
+    }
+
+    // Get the stats
+    public String getStats(boolean timeout) {
+        String output = "Open List Size: " + openList.size() + "\n";
+        output += "Closed List Size: " + closedList.size() + "\n";
+        output += "Solution Size: ";
+        output += timeout ? "Unknown" : solution.size();
+        output += "\n";
+        return output;
+    }
+
+    // To string
+    @Override
+    public String toString() {
+        String output = "Solution:\n";
+        output += getSolution();
+        output += "\nStatistics:\n";
+        output += getStats();
+        return output;
+    }
+
+    // Run
+    @Override
+    public void run() {
+        solve();
     }
 }

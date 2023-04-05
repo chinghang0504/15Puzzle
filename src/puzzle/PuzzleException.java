@@ -13,11 +13,11 @@ class PuzzleException {
         }
     }
 
-    // Bad Order Exception
-    public static class BadOrderException extends RuntimeException {
+    // Bad Dimension Exception
+    public static class BadDimensionException extends RuntimeException {
 
         // Constructor
-        public BadOrderException(String message) {
+        public BadDimensionException(String message) {
             super(message);
             printStackTrace();
             System.exit(0);

@@ -7,7 +7,7 @@ import java.util.Objects;
 class PuzzleState {
 
     private final int[][] board;
-    private final int order;
+    private final int dimension;
     private final int maxTile;
 
     private int stepCount;
@@ -15,25 +15,25 @@ class PuzzleState {
     private PuzzlePosition maxTilePuzzlePosition;
 
     private PuzzleState prevPuzzleState;
-    private PuzzleAction prevPuzzleAction;
+    private PuzzleMovement prevPuzzleMovement;
 
     // Constructor (Initial State)
     public PuzzleState(int[][] board) {
         this.board = board;
-        order = this.board.length;
-        maxTile = this.board.length * this.board.length;
+        dimension = this.board.length;
+        maxTile = dimension * dimension;
 
         updateManhattanDistance();
     }
 
     // Constructor (Next State)
     public PuzzleState(PuzzleState prevPuzzleState, PuzzlePosition nextPuzzlePosition, PuzzleDirection nextPuzzleDirection) {
-        order = prevPuzzleState.order;
+        dimension = prevPuzzleState.dimension;
         maxTile = prevPuzzleState.maxTile;
-        board = new int[order][order];
+        board = new int[dimension][dimension];
 
-        for (int i = 0; i < order; i++) {
-            for (int j = 0; j < order; j++) {
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
                 board[i][j] = prevPuzzleState.board[i][j];
             }
         }
@@ -43,7 +43,7 @@ class PuzzleState {
         board[nextPuzzlePosition.row][nextPuzzlePosition.col] = maxTile;
 
         this.prevPuzzleState = prevPuzzleState;
-        prevPuzzleAction = new PuzzleAction(nextTile, nextPuzzleDirection);
+        prevPuzzleMovement = new PuzzleMovement(nextTile, nextPuzzleDirection);
 
         stepCount = prevPuzzleState.stepCount + 1;
         updateManhattanDistance();
@@ -53,18 +53,23 @@ class PuzzleState {
     private void updateManhattanDistance() {
         manhattanDistance = 0;
 
-        for (int i = 0; i < order; i++) {
-            for (int j = 0; j < order; j++) {
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
                 if (board[i][j] == maxTile) {
                     maxTilePuzzlePosition = new PuzzlePosition(i, j);
                     continue;
                 } else {
-                    int row = (board[i][j] - 1) / order;
-                    int col = (board[i][j] - 1) % order;
+                    int row = (board[i][j] - 1) / dimension;
+                    int col = (board[i][j] - 1) % dimension;
                     manhattanDistance += Math.abs(row - i) + Math.abs(col - j);
                 }
             }
         }
+    }
+
+    // Get the step count
+    public int getStepCount() {
+        return stepCount;
     }
 
     // Get the manhattan distance
@@ -82,9 +87,9 @@ class PuzzleState {
         return prevPuzzleState;
     }
 
-    // Get the previous puzzle action
-    public PuzzleAction getPrevPuzzleAction() {
-        return prevPuzzleAction;
+    // Get the previous puzzle movement
+    public PuzzleMovement getPrevPuzzleMovement() {
+        return prevPuzzleMovement;
     }
 
     // Convert tile to string
@@ -104,9 +109,9 @@ class PuzzleState {
     private String getBoard() {
         String output = "";
 
-        for (int i = 0; i < order; i++) {
+        for (int i = 0; i < dimension; i++) {
             output += tileToString(board[i][0]);
-            for (int j = 1; j < order; j++) {
+            for (int j = 1; j < dimension; j++) {
                 output += " " + tileToString(board[i][j]);
             }
             output += "\n";
@@ -123,8 +128,13 @@ class PuzzleState {
         output += "Previous Puzzle State: ";
         output += prevPuzzleState == null ? null : Integer.toHexString(prevPuzzleState.hashCode());
         output += "\n";
-        output += "Previous Action: " + prevPuzzleAction + "\n";
+        output += "Previous Movement: " + prevPuzzleMovement + "\n";
         return output;
+    }
+
+    // Is goal
+    public boolean isGoal() {
+        return manhattanDistance == 0;
     }
 
     // Get neighbours
@@ -133,7 +143,7 @@ class PuzzleState {
 
         for (PuzzleDirection puzzleDirection: PuzzleDirection.values()) {
             PuzzlePosition nextPuzzlePosition = maxTilePuzzlePosition.getNextPuzzlePosition(puzzleDirection);
-            if (nextPuzzlePosition.isValid(order)) {
+            if (nextPuzzlePosition.isValidPuzzlePosition(dimension)) {
                 output.add(new PuzzleState(this, nextPuzzlePosition, puzzleDirection.getReversedPuzzleDirection()));
             }
         }
@@ -141,9 +151,12 @@ class PuzzleState {
         return output;
     }
 
-    // Is goal
-    public boolean isGoal() {
-        return manhattanDistance == 0;
+    // Is same board
+    public boolean isSameBoard(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PuzzleState that = (PuzzleState) o;
+        return dimension == that.dimension && manhattanDistance == that.manhattanDistance && Arrays.deepEquals(board, that.board);
     }
 
     // To string
@@ -161,13 +174,13 @@ class PuzzleState {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PuzzleState that = (PuzzleState) o;
-        return order == that.order && stepCount == that.stepCount && manhattanDistance == that.manhattanDistance && Arrays.deepEquals(board, that.board);
+        return dimension == that.dimension && stepCount == that.stepCount && manhattanDistance == that.manhattanDistance && Arrays.deepEquals(board, that.board);
     }
 
     // Hash code
     @Override
     public int hashCode() {
-        int result = Objects.hash(order, stepCount, manhattanDistance);
+        int result = Objects.hash(dimension, stepCount, manhattanDistance);
         result = 31 * result + Arrays.deepHashCode(board);
         return result;
     }

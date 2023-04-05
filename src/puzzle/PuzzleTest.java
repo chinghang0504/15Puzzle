@@ -1,34 +1,52 @@
 package puzzle;
 
 import java.io.File;
-import java.util.ArrayList;
 
-public class PuzzleTest {
-    private static final String directoryName = "testcases";
+class PuzzleTest {
 
-    // Run all the testcases
-    private static void run() {
-        File file = new File(directoryName);
+    private static final String TESTCASES_DIRECTORY = "testcases/";
+    private static final int TIMEOUT_IN_MILLIS = 300000;
+
+    // Run a test
+    private static void runTest() {
+        File file = new File(TESTCASES_DIRECTORY);
         String[] fileNames = file.list();
+        long runningTime = 0;
 
-        for (String fileName : fileNames) {
-            String path = directoryName + "/" + fileName;
-            PuzzleSolver puzzleSolver = new PuzzleSolver(path);
+        for (String fileName: fileNames) {
+            PuzzleSolver puzzleSolver = new PuzzleSolver(TESTCASES_DIRECTORY + fileName);
+            Thread thread = new Thread(puzzleSolver);
 
+            boolean timeout = false;
             long start = System.currentTimeMillis();
-            puzzleSolver.solve();
-            long end = System.currentTimeMillis();
-            double timeTaken = (double) (end - start) / 1000;
+            thread.start();
+            while (thread.isAlive() && !timeout) {
+                runningTime = System.currentTimeMillis() - start;
+                if (runningTime > TIMEOUT_IN_MILLIS) {
+                    timeout = true;
+                }
+            }
+            if (timeout) {
+                thread.interrupt();
+            }
 
-            System.out.println("File Name: " + fileName);
-            System.out.print(puzzleSolver.getStats());
-            System.out.println("Time Taken: " + timeTaken);
+            System.out.print(getResult(fileName, puzzleSolver, timeout, runningTime));
             System.out.println("");
         }
     }
 
+    // Get a result
+    private static String getResult(String fileName, PuzzleSolver puzzleSolver, boolean timeout, long runningTime) {
+        String output = "File Name: " + fileName + "\n";
+        output += puzzleSolver.getStats(timeout);
+        output += "Running Time: ";
+        output += timeout ? "timeout" : (runningTime / 1000d);
+        output += "\n";
+        return output;
+    }
+
     // Main
     public static void main(String[] args) {
-        run();
+        runTest();
     }
 }
