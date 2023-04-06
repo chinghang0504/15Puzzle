@@ -34,4 +34,15 @@ class PuzzleException {
             System.exit(0);
         }
     }
+
+    // Bad Solver Exception
+    public static class BadSolverException extends RuntimeException {
+
+        // Constructor
+        public BadSolverException() {
+            super("This puzzle is not solved yet");
+            printStackTrace();
+            System.exit(0);
+        }
+    }
 }

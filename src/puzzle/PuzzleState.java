@@ -6,9 +6,8 @@ import java.util.Objects;
 
 class PuzzleState {
 
-    private final int[][] board;
     private final int dimension;
-    private final int maxTile;
+    private final int[][] board;
 
     private int stepCount;
     private int manhattanDistance;
@@ -21,15 +20,13 @@ class PuzzleState {
     public PuzzleState(int[][] board) {
         this.board = board;
         dimension = this.board.length;
-        maxTile = dimension * dimension;
 
         updateManhattanDistance();
     }
 
     // Constructor (Next State)
-    public PuzzleState(PuzzleState prevPuzzleState, PuzzlePosition nextPuzzlePosition, PuzzleDirection nextPuzzleDirection) {
+    public PuzzleState(PuzzleState prevPuzzleState, PuzzlePosition nextPuzzlePosition, PuzzleDirection puzzleDirection) {
         dimension = prevPuzzleState.dimension;
-        maxTile = prevPuzzleState.maxTile;
         board = new int[dimension][dimension];
 
         for (int i = 0; i < dimension; i++) {
@@ -38,12 +35,12 @@ class PuzzleState {
             }
         }
 
-        int nextTile = board[nextPuzzlePosition.row][nextPuzzlePosition.col];
-        board[prevPuzzleState.maxTilePuzzlePosition.row][prevPuzzleState.maxTilePuzzlePosition.col] = nextTile;
-        board[nextPuzzlePosition.row][nextPuzzlePosition.col] = maxTile;
+        int nextTile = nextPuzzlePosition.getTile(board);
+        nextPuzzlePosition.setTile(board, dimension * dimension);
+        prevPuzzleState.maxTilePuzzlePosition.setTile(board, nextTile);
 
         this.prevPuzzleState = prevPuzzleState;
-        prevPuzzleMovement = new PuzzleMovement(nextTile, nextPuzzleDirection);
+        prevPuzzleMovement = new PuzzleMovement(nextTile, puzzleDirection.getReversed());
 
         stepCount = prevPuzzleState.stepCount + 1;
         updateManhattanDistance();
@@ -55,7 +52,7 @@ class PuzzleState {
 
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
-                if (board[i][j] == maxTile) {
+                if (board[i][j] == dimension * dimension) {
                     maxTilePuzzlePosition = new PuzzlePosition(i, j);
                     continue;
                 } else {
@@ -77,8 +74,8 @@ class PuzzleState {
         return manhattanDistance;
     }
 
-    // Get the estimated cost
-    public int getEstimatedCost() {
+    // Get the heuristic value
+    public int getHeuristicValue() {
         return stepCount + manhattanDistance;
     }
 
@@ -92,21 +89,8 @@ class PuzzleState {
         return prevPuzzleMovement;
     }
 
-    // Convert tile to string
-    private String tileToString(int tile) {
-        if (tile == maxTile) {
-            return "  ";
-        } else {
-            String output = String.valueOf(tile);
-            if (output.length() == 1) {
-                output = " " + output;
-            }
-            return output;
-        }
-    }
-
     // Get the board
-    private String getBoard() {
+    public String getBoard() {
         String output = "";
 
         for (int i = 0; i < dimension; i++) {
@@ -120,11 +104,24 @@ class PuzzleState {
         return output;
     }
 
+    // Convert the tile to a string
+    private String tileToString(int tile) {
+        if (tile == dimension * dimension) {
+            return "  ";
+        } else {
+            String output = String.valueOf(tile);
+            if (output.length() == 1) {
+                output = " " + output;
+            }
+            return output;
+        }
+    }
+
     // Get the info
     private String getInfo() {
-        String output = "Step Count: " + stepCount + "\n";
-        output += "Manhattan Distance: " + manhattanDistance + "\n";
-        output += "Estimated Cost: " + getEstimatedCost() + "\n";
+        String output = "Step Count: " + getStepCount() + "\n";
+        output += "Manhattan Distance: " + getManhattanDistance() + "\n";
+        output += "Heuristic Value: " + getHeuristicValue() + "\n";
         output += "Previous Puzzle State: ";
         output += prevPuzzleState == null ? null : Integer.toHexString(prevPuzzleState.hashCode());
         output += "\n";
@@ -132,37 +129,35 @@ class PuzzleState {
         return output;
     }
 
-    // Is goal
-    public boolean isGoal() {
-        return manhattanDistance == 0;
-    }
-
-    // Get neighbours
+    // Get the neighbours
     public ArrayList<PuzzleState> getNeighbours() {
-        ArrayList<PuzzleState> output = new ArrayList<>(PuzzleDirection.DIRECTION_NUMBER);
+        PuzzleDirection[] puzzleDirections = PuzzleDirection.values();
+        ArrayList<PuzzleState> output = new ArrayList<>(puzzleDirections.length);
 
-        for (PuzzleDirection puzzleDirection: PuzzleDirection.values()) {
-            PuzzlePosition nextPuzzlePosition = maxTilePuzzlePosition.getNextPuzzlePosition(puzzleDirection);
-            if (nextPuzzlePosition.isValidPuzzlePosition(dimension)) {
-                output.add(new PuzzleState(this, nextPuzzlePosition, puzzleDirection.getReversedPuzzleDirection()));
+        for (PuzzleDirection puzzleDirection: puzzleDirections) {
+            PuzzlePosition nextPuzzlePosition = maxTilePuzzlePosition.getNext(puzzleDirection);
+            if (nextPuzzlePosition.isValid(dimension)) {
+                output.add(new PuzzleState(this, nextPuzzlePosition, puzzleDirection));
             }
         }
 
         return output;
     }
 
-    // Is same board
-    public boolean isSameBoard(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PuzzleState that = (PuzzleState) o;
-        return dimension == that.dimension && manhattanDistance == that.manhattanDistance && Arrays.deepEquals(board, that.board);
+    // Is the goal
+    public boolean isGoal() {
+        return manhattanDistance == 0;
+    }
+
+    // Is the same board
+    public boolean isSameBoard(PuzzleState puzzleState) {
+        return dimension == puzzleState.dimension && manhattanDistance == puzzleState.manhattanDistance && Arrays.deepEquals(board, puzzleState.board);
     }
 
     // To string
     @Override
     public String toString() {
-        String output = "Puzzle State: " + Integer.toHexString(hashCode()) +  "\n";
+        String output = "Puzzle State: " + Integer.toHexString(hashCode()) + "\n";
         output += getBoard();
         output += getInfo();
         return output;

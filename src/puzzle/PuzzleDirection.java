@@ -9,15 +9,13 @@ enum PuzzleDirection {
 
     private final String description;
 
-    public static final int DIRECTION_NUMBER = 4;
-
     // Constructor
     PuzzleDirection(String description) {
         this.description = description;
     }
 
-    // Get reversed puzzle direction
-    public PuzzleDirection getReversedPuzzleDirection() {
+    // Get the reversed puzzle direction
+    public PuzzleDirection getReversed() {
         switch (this) {
             case UP:
                 return DOWN;

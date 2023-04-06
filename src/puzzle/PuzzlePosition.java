@@ -12,7 +12,7 @@ class PuzzlePosition {
     }
 
     // Get the next puzzle position
-    public PuzzlePosition getNextPuzzlePosition(PuzzleDirection puzzleDirection) {
+    public PuzzlePosition getNext(PuzzleDirection puzzleDirection) {
         switch (puzzleDirection) {
             case UP:
                 return new PuzzlePosition(row-1, col);
@@ -27,8 +27,8 @@ class PuzzlePosition {
         }
     }
 
-    // Is valid puzzle position
-    public boolean isValidPuzzlePosition(int dimension) {
+    // Is a valid puzzle position
+    public boolean isValid(int dimension) {
         if (row < 0 || row >= dimension) {
             return false;
         }
@@ -37,5 +37,15 @@ class PuzzlePosition {
         }
 
         return true;
+    }
+
+    // Get the tile
+    public int getTile(int[][] board) {
+        return board[row][col];
+    }
+
+    // Set the tile
+    public void setTile(int[][] board, int tile) {
+        board[row][col] = tile;
     }
 }

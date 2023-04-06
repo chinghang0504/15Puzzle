@@ -7,6 +7,7 @@ import puzzle.PuzzleException.*;
 
 public class PuzzleSolver implements Runnable {
 
+    private int dimension;
     private PuzzleState initialState;
 
     private PriorityQueue<PuzzleState> openList;
@@ -21,9 +22,9 @@ public class PuzzleSolver implements Runnable {
         // Compare
         @Override
         public int compare(PuzzleState o1, PuzzleState o2) {
-            if (o1.getEstimatedCost() < o2.getEstimatedCost()) {
+            if (o1.getHeuristicValue() < o2.getHeuristicValue()) {
                 return -1;
-            } else if (o1.getEstimatedCost() > o2.getEstimatedCost()) {
+            } else if (o1.getHeuristicValue() > o2.getHeuristicValue()) {
                 return 1;
             } else {
                 return 0;
@@ -35,11 +36,11 @@ public class PuzzleSolver implements Runnable {
     public PuzzleSolver(String fileName) {
         Scanner scanner = loadPuzzleFile(fileName);
 
-        int dimension = loadPuzzleDimension(scanner);
-        checkPuzzleDimension(dimension);
+        loadPuzzleDimension(scanner);
+        checkPuzzleDimension();
 
-        int[][] initialBoard = loadPuzzleBoard(scanner, dimension);
-        checkPuzzleBoard(initialBoard, dimension);
+        int[][] initialBoard = loadPuzzleBoard(scanner);
+        checkPuzzleBoard(initialBoard);
         initialState = new PuzzleState(initialBoard);
     }
 
@@ -55,11 +56,11 @@ public class PuzzleSolver implements Runnable {
     }
 
     // Load the puzzle dimension
-    private int loadPuzzleDimension(Scanner scanner) {
+    private void loadPuzzleDimension(Scanner scanner) {
         String line = null;
         try {
             line = scanner.nextLine();
-            return Integer.valueOf(line);
+            dimension = Integer.valueOf(line);
         } catch (NoSuchElementException e) {
             throw new BadDimensionException("The system cannot find the puzzle dimension");
         } catch (NumberFormatException e) {
@@ -68,14 +69,14 @@ public class PuzzleSolver implements Runnable {
     }
 
     // Check the puzzle dimension
-    private void checkPuzzleDimension(int dimension) {
+    private void checkPuzzleDimension() {
         if (dimension < 2) {
             throw new BadDimensionException("The puzzle dimension cannot be less than 2");
         }
     }
 
     // Load the puzzle board
-    private int[][] loadPuzzleBoard(Scanner scanner, int dimension) {
+    private int[][] loadPuzzleBoard(Scanner scanner) {
         int[][] board = new int[dimension][dimension];
         String tileString = null;
 
@@ -101,21 +102,21 @@ public class PuzzleSolver implements Runnable {
     }
 
     // Check the puzzle board
-    private void checkPuzzleBoard(int[][] board, int dimension) {
+    private void checkPuzzleBoard(int[][] board) {
         int maxTile = dimension * dimension;
         int[] tileCounts = new int[maxTile];
 
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
                 if (board[i][j] < 1 || board[i][j] > maxTile) {
-                    throw new BadBoardException(board[i][j] + " (This tile is invalid)");
+                    throw new BadBoardException(board[i][j] + " (Invalid tile)");
                 }
 
                 tileCounts[board[i][j] - 1]++;
             }
         }
 
-        for (int i = 0; i < maxTile - 1; i++) {
+        for (int i = 0; i < maxTile; i++) {
             if (tileCounts[i] < 1) {
                 throw new BadBoardException((i + 1) + " (This tile is missing)");
             } else if (tileCounts[i] > 1) {
@@ -124,7 +125,36 @@ public class PuzzleSolver implements Runnable {
         }
     }
 
-    // Solve the puzzle problem
+    // Get the dimension
+    public int getDimension() {
+        return dimension;
+    }
+
+    // Get the open list size
+    public int getOpenListSize() {
+        if (openList == null) {
+            throw new BadSolverException();
+        }
+        return openList.size();
+    }
+
+    // Get the closed list size
+    public int getClosedListSize() {
+        if (closedList == null) {
+            throw new BadSolverException();
+        }
+        return closedList.size();
+    }
+
+    // Get the step size in a solution
+    public int getSolutionStepSize() {
+        if (solution == null) {
+            throw new BadSolverException();
+        }
+        return solution.size();
+    }
+
+    // Solve the puzzle
     public void solve() {
         if (solved) {
             return;
@@ -165,7 +195,7 @@ public class PuzzleSolver implements Runnable {
 
             // Generate neighbours
             ArrayList<PuzzleState> neighbours = currPuzzleState.getNeighbours();
-            for (PuzzleState neighbour: neighbours) {
+            for (PuzzleState neighbour : neighbours) {
                 // Check in the closed list
                 if (closedList.contains(neighbour)) {
                     continue;
@@ -185,7 +215,6 @@ public class PuzzleSolver implements Runnable {
                         break;
                     }
                 }
-
                 if (addNeighbour) {
                     openList.add(neighbour);
                 }
@@ -204,47 +233,47 @@ public class PuzzleSolver implements Runnable {
     // Get the solution
     public String getSolution() {
         if (!solved) {
-            return "This puzzle is not solved yet\n";
+            throw new BadSolverException();
         } else if (solution.size() == 0) {
             if (foundSolution) {
-                return "The initial state is the goal state\n";
+                return "";
             } else {
                 return "This puzzle is no solution\n";
             }
         } else {
             String output = "";
-            for (PuzzleMovement puzzleMovement: solution) {
+            for (PuzzleMovement puzzleMovement : solution) {
                 output += puzzleMovement + "\n";
             }
             return output;
         }
     }
 
-    // Get the stats
-    public String getStats() {
-        String output = "Open List Size: " + openList.size() + "\n";
-        output += "Closed List Size: " + closedList.size() + "\n";
-        output += "Solution Size: " + solution.size() + "\n";
-        return output;
-    }
+    // Get the result
+    public String getResult() {
+        if (!solved) {
+            throw new BadSolverException();
+        }
 
-    // Get the stats
-    public String getStats(boolean timeout) {
         String output = "Open List Size: " + openList.size() + "\n";
         output += "Closed List Size: " + closedList.size() + "\n";
-        output += "Solution Size: ";
-        output += timeout ? "Unknown" : solution.size();
-        output += "\n";
+        output += "Number of Steps in a Solution: " + solution.size() + "\n";
         return output;
     }
 
     // To string
     @Override
     public String toString() {
-        String output = "Solution:\n";
+        if (!solved) {
+            throw new BadSolverException();
+        }
+
+        String output = "Initial State:\n";
+        output += initialState.getBoard();
+        output += "\nSolution:\n";
         output += getSolution();
-        output += "\nStatistics:\n";
-        output += getStats();
+        output += "\nResult:\n";
+        output += getResult();
         return output;
     }
 
