@@ -1,4 +1,4 @@
-package puzzle.puzzle1;
+package puzzle.puzzle3;
 
 class PuzzleMovement {
 

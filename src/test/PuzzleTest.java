@@ -85,6 +85,10 @@ public class PuzzleTest {
                 return new puzzle.puzzle1.PuzzleSolver(path);
             case 2:
                 return new puzzle.puzzle2.PuzzleSolver(path);
+            case 3:
+                return new puzzle.puzzle3.PuzzleSolver(path);
+            case 4:
+                return new puzzle.puzzle4.PuzzleSolver(path);
             default:
                 throw new BadSolverNumberException(puzzleSolverNumber + " (Invalid puzzle solver number");
         }
