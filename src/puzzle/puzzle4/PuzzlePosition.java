@@ -26,26 +26,4 @@ class PuzzlePosition {
                 return null;
         }
     }
-
-    // Is a valid puzzle position
-    public boolean isValid(int dimension) {
-        if (ROW < 0 || ROW >= dimension) {
-            return false;
-        }
-        if (COL < 0 || COL >= dimension) {
-            return false;
-        }
-
-        return true;
-    }
-
-    // Get the tile
-    public int getTile(int[][] board) {
-        return board[ROW][COL];
-    }
-
-    // Set the tile
-    public void setTile(int[][] board, int tile) {
-        board[ROW][COL] = tile;
-    }
 }

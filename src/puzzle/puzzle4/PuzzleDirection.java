@@ -7,7 +7,7 @@ enum PuzzleDirection {
     LEFT("L"),
     RIGHT("R");
 
-    private final String DESCRIPTION;
+    public final String DESCRIPTION;
 
     // Constructor
     PuzzleDirection(String description) {

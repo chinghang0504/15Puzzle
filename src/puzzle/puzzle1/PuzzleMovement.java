@@ -2,7 +2,7 @@ package puzzle.puzzle1;
 
 class PuzzleMovement {
 
-    private final int TILE;
+    public final int TILE;
     public final PuzzleDirection PUZZLE_DIRECTION;
 
     // Constructor
@@ -14,6 +14,6 @@ class PuzzleMovement {
     // To string
     @Override
     public String toString() {
-        return TILE + " " + PUZZLE_DIRECTION;
+        return TILE + " " + PUZZLE_DIRECTION.DESCRIPTION;
     }
 }
