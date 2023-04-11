@@ -11,7 +11,7 @@ public class PuzzleTest {
     public final long TIMEOUT_IN_MILLIS;
 
     public static final int START_PUZZLE_SOLVER_NUMBER = 1;
-    public static final int END_PUZZLE_SOLVER_NUMBER = 4;
+    public static final int END_PUZZLE_SOLVER_NUMBER = 6;
 
     private static final String RESULTS_DIRECTORY_NAME = "results";
     private static final String RESULT_FILE_NAME_1 = "puzzle_result_";
@@ -103,6 +103,8 @@ public class PuzzleTest {
                 return new puzzle.puzzle3.PuzzleSolver(path);
             case 4:
                 return new puzzle.puzzle4.PuzzleSolver(path);
+            case 6:
+                return new puzzle.puzzle6.PuzzleSolver(path);
             default:
                 return null;
         }
