@@ -7,9 +7,9 @@ Testing Environment
 - IDE: IntelliJ IDEA
 
 Puzzle Description
-- Puzzle 2: Basic Implement using A* algorithm
-- Puzzle 4: Reduce one direction if the puzzle is the same as before
-- Puzzle 6: Using subgoal search
+- Puzzle 1: Implement A* algorithm
+- Puzzle 2: Reduce one direction if the puzzle state is the same as before
+- Puzzle 3: Implement subgoal search
 
 Idea of Subgoal Search
 <img src="https://github.com/chinghang0504/15Puzzle/blob/main/idea1.jpg" alt="Alt text" title="Optional title">
