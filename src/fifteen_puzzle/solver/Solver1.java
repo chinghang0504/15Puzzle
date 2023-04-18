@@ -233,14 +233,17 @@ public class Solver1 implements SolverResult, Runnable {
     // Load the puzzle board
     private int[][] loadPuzzleBoard(Scanner scanner) {
         int[][] board = new int[dimension][dimension];
+        int length = String.valueOf(emptyTile).length();
         String tileString = null;
-        String pattern = "[0-9]*";
 
         try {
             for (int i = 0; i < dimension; i++) {
+                String line = scanner.nextLine();
                 for (int j = 0; j < dimension; j++) {
-                    tileString = scanner.next(pattern);
-                    board[i][j] = Integer.valueOf(tileString);
+                    int begin = j * (length + 1);
+                    int end = begin + length;
+                    tileString = line.substring(begin, end).replaceAll(" ", "");
+                    board[i][j] = tileString.isEmpty() ? emptyTile : Integer.valueOf(tileString);
                 }
             }
         } catch (NoSuchElementException e) {

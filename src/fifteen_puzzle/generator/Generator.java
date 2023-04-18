@@ -13,6 +13,8 @@ public class Generator {
 
     private static int puzzleCount = 0;
 
+    private static final int FIXED_STEP_SIZE = 100000;
+
     private static final String TESTCASES_DIRECTORY_NAME = "testcases";
     private static final String OUTPUT_FILE_NAME_1 = "board";
     private static final String OUTPUT_FILE_NAME_2 = ".txt";
@@ -25,6 +27,7 @@ public class Generator {
     private static Position emptyTilePosition;
 
     // Static constructor
+    // Delete all the testcases
     static {
         File directory = new File(TESTCASES_DIRECTORY_NAME);
         File[] files = directory.listFiles();
@@ -53,7 +56,7 @@ public class Generator {
     public static void generate(int dimension) {
         checkDimension(dimension);
         Generator.dimension = dimension;
-        Generator.stepSize = dimension * dimension * dimension * dimension;
+        Generator.stepSize = FIXED_STEP_SIZE;
 
         createPuzzleFile();
 
@@ -80,7 +83,7 @@ public class Generator {
 
     // Create a puzzle file
     private static void createPuzzleFile() {
-        fileName = OUTPUT_FILE_NAME_1 + String.format("%02d", puzzleCount+1) + OUTPUT_FILE_NAME_2;
+        fileName = OUTPUT_FILE_NAME_1 + String.format("%03d", puzzleCount+1) + OUTPUT_FILE_NAME_2;
         String filePath = TESTCASES_DIRECTORY_NAME + "/" + fileName;
 
         try {
@@ -187,9 +190,15 @@ public class Generator {
 
     // Convert the tile to a string
     private static String tileToString(int tile) {
-        int length = String.valueOf(dimension * dimension).length();
-        String formatString = "%" + length + "d";
+        int emptyTile = dimension * dimension;
+        int length = String.valueOf(emptyTile).length();
 
-        return String.format(formatString, tile);
+        if (tile == emptyTile) {
+            String formatString = "%" + length + "s";
+            return String.format(formatString, "");
+        } else {
+            String formatString = "%" + length + "d";
+            return String.format(formatString, tile);
+        }
     }
 }

@@ -348,14 +348,17 @@ public class Solver3 implements SolverResult, Runnable {
     // Load the puzzle board
     private int[][] loadPuzzleBoard(Scanner scanner) {
         int[][] board = new int[dimension][dimension];
+        int length = String.valueOf(emptyTile).length();
         String tileString = null;
-        String pattern = "[0-9]*";
 
         try {
             for (int i = 0; i < dimension; i++) {
+                String line = scanner.nextLine();
                 for (int j = 0; j < dimension; j++) {
-                    tileString = scanner.next(pattern);
-                    board[i][j] = Integer.valueOf(tileString);
+                    int begin = j * (length + 1);
+                    int end = begin + length;
+                    tileString = line.substring(begin, end).replaceAll(" ", "");
+                    board[i][j] = tileString.isEmpty() ? emptyTile : Integer.valueOf(tileString);
                 }
             }
         } catch (NoSuchElementException e) {
@@ -408,17 +411,19 @@ public class Solver3 implements SolverResult, Runnable {
 
         int time = dimension * (dimension - 2);
         for (int i = 0; i < time; i++) {
-            solveSubgoal(false);
+            if (!solveSubgoal(false)) {
+                return;
+            }
         }
         solveSubgoal(true);
     }
 
     // Solve the subgoal of puzzle
-    private void solveSubgoal(boolean lastLoop) {
+    private boolean solveSubgoal(boolean lastLoop) {
         while (true) {
             // Check interrupted
             if (Thread.interrupted()) {
-                return;
+                return false;
             }
 
             // Get the current puzzle state from the open list
@@ -426,7 +431,7 @@ public class Solver3 implements SolverResult, Runnable {
             if (lastLoop && currPuzzleState == null) {
                 solved = true;
                 foundSolution = false;
-                return;
+                return false;
             }
 
             // Add the current puzzle state to the closed list
@@ -452,7 +457,7 @@ public class Solver3 implements SolverResult, Runnable {
                     openList.add(currPuzzleState);
                 }
 
-                return;
+                return true;
             }
 
             // Generate neighbours

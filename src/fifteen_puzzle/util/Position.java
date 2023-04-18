@@ -34,6 +34,11 @@ public class Position {
         return Math.abs(p1.row - p2.row) + Math.abs(p1.col - p2.col);
     }
 
+    // Get the manhattan distance between two positions
+    public static int getManhattanDistance(int row1, int col1, int row2, int col2) {
+        return Math.abs(row1 - row2) + Math.abs(col1 - col2);
+    }
+
     // Equals
     @Override
     public boolean equals(Object o) {
