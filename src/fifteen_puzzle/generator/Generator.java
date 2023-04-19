@@ -2,6 +2,7 @@ package fifteen_puzzle.generator;
 
 import fifteen_puzzle.util.Direction;
 import fifteen_puzzle.util.Position;
+import fifteen_puzzle.util.General;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,12 +15,14 @@ public class Generator {
     private static int puzzleCount = 0;
 
     private static final int FIXED_STEP_SIZE = 100000;
+    private static final int OUTPUT_FILE_NUMBER_SIZE = 3;
 
     private static final String TESTCASES_DIRECTORY_NAME = "testcases";
     private static final String OUTPUT_FILE_NAME_1 = "board";
     private static final String OUTPUT_FILE_NAME_2 = ".txt";
 
     private static int dimension;
+    private static int emptyTile;
     private static int stepSize;
     private static String fileName;
     private static FileWriter fileWriter;
@@ -40,6 +43,7 @@ public class Generator {
     public static void generate(int dimension, int stepSize) {
         checkDimension(dimension);
         Generator.dimension = dimension;
+        Generator.emptyTile = dimension * dimension;
         checkStepSize(stepSize);
         Generator.stepSize = stepSize;
 
@@ -54,17 +58,7 @@ public class Generator {
 
     // Generate a puzzle file
     public static void generate(int dimension) {
-        checkDimension(dimension);
-        Generator.dimension = dimension;
-        Generator.stepSize = FIXED_STEP_SIZE;
-
-        createPuzzleFile();
-
-        createBoard();
-        shuffleTiles();
-        writePuzzleFile();
-
-        closePuzzleFile();
+        generate(dimension, FIXED_STEP_SIZE);
     }
 
     // Check the dimension
@@ -83,7 +77,8 @@ public class Generator {
 
     // Create a puzzle file
     private static void createPuzzleFile() {
-        fileName = OUTPUT_FILE_NAME_1 + String.format("%03d", puzzleCount+1) + OUTPUT_FILE_NAME_2;
+        String formatString = "%0" + OUTPUT_FILE_NUMBER_SIZE + "d";
+        fileName = OUTPUT_FILE_NAME_1 + String.format(formatString, puzzleCount+1) + OUTPUT_FILE_NAME_2;
         String filePath = TESTCASES_DIRECTORY_NAME + "/" + fileName;
 
         try {
@@ -160,45 +155,13 @@ public class Generator {
 
     // Write the puzzle file
     private static void writePuzzleFile() {
-        writeDimension();
-        writeBoard();
-    }
+        String output = dimension + "\n";
+        output += General.getBoard(board, dimension, emptyTile);
 
-    // Write the dimension
-    private static void writeDimension() {
         try {
-            fileWriter.write(dimension + "\n");
+            fileWriter.write(output);
         } catch (IOException e) {
             throw new BadFileException(fileName + " (The system cannot modify this file)");
-        }
-    }
-
-    // Write the board
-    private static void writeBoard() {
-        try {
-            for (int i = 0; i < dimension; i++) {
-                fileWriter.write(tileToString(board[i][0]));
-                for (int j = 1; j < dimension; j++) {
-                    fileWriter.write(" " + tileToString(board[i][j]));
-                }
-                fileWriter.write("\n");
-            }
-        } catch (IOException e) {
-            throw new BadFileException(fileName + " (The system cannot modify this file)");
-        }
-    }
-
-    // Convert the tile to a string
-    private static String tileToString(int tile) {
-        int emptyTile = dimension * dimension;
-        int length = String.valueOf(emptyTile).length();
-
-        if (tile == emptyTile) {
-            String formatString = "%" + length + "s";
-            return String.format(formatString, "");
-        } else {
-            String formatString = "%" + length + "d";
-            return String.format(formatString, tile);
         }
     }
 }

@@ -1,8 +1,8 @@
 package fifteen_puzzle.test;
 
-import fifteen_puzzle.solver.Solver1;
-import fifteen_puzzle.solver.Solver2;
-import fifteen_puzzle.solver.Solver3;
+import fifteen_puzzle.solvers.Solver1;
+import fifteen_puzzle.solvers.Solver2;
+import fifteen_puzzle.solvers.Solver3;
 import fifteen_puzzle.util.SolverResult;
 
 import java.io.File;

@@ -1,4 +1,4 @@
-package fifteen_puzzle.solver;
+package fifteen_puzzle.solvers;
 
 // Bad File Exception
 class BadFileException extends RuntimeException {

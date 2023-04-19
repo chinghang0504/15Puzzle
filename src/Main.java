@@ -1,5 +1,4 @@
 import fifteen_puzzle.generator.Generator;
-import fifteen_puzzle.solver.Solver3;
 import fifteen_puzzle.test.PerformanceTest;
 
 public class Main {

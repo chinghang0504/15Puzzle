@@ -1,4 +1,4 @@
-package fifteen_puzzle.solver;
+package fifteen_puzzle.solvers;
 
 import fifteen_puzzle.util.Direction;
 import fifteen_puzzle.util.Movement;
@@ -9,17 +9,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-public class Solver3 implements SolverResult, Runnable {
+public class Solver2 implements SolverResult, Runnable {
 
     private int dimension;
     private int emptyTile;
     private PuzzleState initialPuzzleState;
-    private int subgoalTile = 1;
 
     private PriorityQueue<PuzzleState> openList;
-    private int openListCount;
     private HashSet<PuzzleState> closedList;
-    private int closedListCount;
     private LinkedList<Movement> solution;
 
     private boolean solved;
@@ -60,95 +57,11 @@ public class Solver3 implements SolverResult, Runnable {
         }
 
         // Update the manhattan distance
-        public void updateManhattanDistance() {
-            Position subgoalPosition = getGoalPuzzlePosition(subgoalTile);
-
-            if (subgoalPosition.row < dimension - 2) {
-                if (subgoalPosition.col < dimension - 2) {
-                    updateManhattanDistanceOneTile();
-                } else {
-                    updateManhattanDistanceTwoTiles(true);
-                }
-            } else if (subgoalPosition.col < dimension - 2) {
-                updateManhattanDistanceTwoTiles(false);
-            } else {
-                updateManhattanDistanceLastThreeTiles();
-            }
-        }
-
-        // Update the manhattan distance (One Tile)
-        private void updateManhattanDistanceOneTile() {
-            Position subgoalPosition = getGoalPuzzlePosition(subgoalTile);
-            Position currPosition = null;
-
+        private void updateManhattanDistance() {
             manhattanDistance = 0;
-            boolean keepSearching = true;
-            for (int i = 0; i < dimension && keepSearching; i++) {
+
+            for (int i = 0; i < dimension; i++) {
                 for (int j = 0; j < dimension; j++) {
-                    if (board[i][j] == emptyTile) {
-                        emptyTilePosition = new Position(i, j);
-                    } else if (board[i][j] == subgoalTile) {
-                        currPosition = new Position(i, j);
-                    }
-                    
-                    if (emptyTilePosition != null && currPosition != null) {
-                        keepSearching = false;
-                        break;
-                    }
-                }
-            }
-
-            if (currPosition.equals(subgoalPosition)) {
-                manhattanDistance = 0;
-            } else {
-                manhattanDistance += Position.getManhattanDistance(currPosition, subgoalPosition);
-                manhattanDistance += Position.getManhattanDistance(currPosition, emptyTilePosition);
-            }
-        }
-
-        // Update the manhattan distance (Two Tiles)
-        private void updateManhattanDistanceTwoTiles(boolean isRow) {
-            int subgoalTile2 = isRow ? subgoalTile + 1 : subgoalTile + dimension;
-            Position subgoalPosition1 = getGoalPuzzlePosition(subgoalTile);
-            Position currPosition1 = null;
-            Position subgoalPosition2 = getGoalPuzzlePosition(subgoalTile2);
-            Position currPosition2 = null;
-
-            manhattanDistance = 0;
-            boolean keepSearching = true;
-            for (int i = 0; i < dimension && keepSearching; i++) {
-                for (int j = 0; j < dimension; j++) {
-                    if (board[i][j] == emptyTile) {
-                        emptyTilePosition = new Position(i, j);
-                    } else if (board[i][j] == subgoalTile) {
-                        currPosition1 = new Position(i, j);
-                    } else if (board[i][j] == subgoalTile2) {
-                        currPosition2 = new Position(i, j);
-                    }
-
-                    if (emptyTilePosition != null && currPosition1 != null && currPosition2 != null) {
-                        keepSearching = false;
-                        break;
-                    }
-                }
-            }
-
-            if (currPosition1.equals(subgoalPosition1) && currPosition2.equals(subgoalPosition2)) {
-                manhattanDistance = 0;
-            } else {
-                manhattanDistance += Position.getManhattanDistance(currPosition1, subgoalPosition1);
-                manhattanDistance += Position.getManhattanDistance(currPosition2, subgoalPosition2);
-                manhattanDistance += Position.getManhattanDistance(currPosition1, emptyTilePosition);
-                manhattanDistance += Position.getManhattanDistance(currPosition2, emptyTilePosition);
-                manhattanDistance += Position.getManhattanDistance(currPosition1, currPosition2);
-            }
-        }
-
-        // Update the manhattan distance (Last Three Tiles)
-        private void updateManhattanDistanceLastThreeTiles() {
-            manhattanDistance = 0;
-            for (int i = dimension - 2; i < dimension; i++) {
-                for (int j = dimension - 2; j < dimension; j++) {
                     if (board[i][j] == emptyTile) {
                         emptyTilePosition = new Position(i, j);
                     } else {
@@ -158,13 +71,6 @@ public class Solver3 implements SolverResult, Runnable {
                     }
                 }
             }
-        }
-
-        // Get the subgoal puzzle position
-        private Position getGoalPuzzlePosition(int tile) {
-            int row = (tile - 1) / dimension;
-            int col = (tile - 1) % dimension;
-            return new Position(row, col);
         }
 
         // Get the heuristic value
@@ -232,24 +138,7 @@ public class Solver3 implements SolverResult, Runnable {
 
         // Is a valid puzzle position
         private boolean isValidPuzzlePosition(Position position) {
-            // Out of boundary
-            if (position.row < 0 || position.row >= dimension || position.col < 0 || position.col >= dimension) {
-                return false;
-            }
-
-            // Subgoal tile boundary
-            Position subgoalPosition = getGoalPuzzlePosition(subgoalTile);
-            if (position.row < subgoalPosition.row) {
-                return false;
-            }
-            if (position.row == subgoalPosition.row && position.col < subgoalPosition.col) {
-                return false;
-            }
-            if (subgoalPosition.row >= dimension - 2 && position.col < subgoalPosition.col) {
-                return false;
-            }
-
-            return true;
+            return position.row >= 0 && position.row < dimension && position.col >= 0 && position.col < dimension;
         }
 
         // Is the goal puzzle state
@@ -300,7 +189,7 @@ public class Solver3 implements SolverResult, Runnable {
     }
 
     // Constructor
-    public Solver3(String path) {
+    public Solver2(String path) {
         Scanner scanner = loadPuzzleFile(path);
 
         loadPuzzleDimension(scanner);
@@ -409,29 +298,18 @@ public class Solver3 implements SolverResult, Runnable {
         // Add the initial puzzle state into the open list
         openList.add(initialPuzzleState);
 
-        int time = dimension * (dimension - 2);
-        for (int i = 0; i < time; i++) {
-            if (!solveSubgoal(false)) {
-                return;
-            }
-        }
-        solveSubgoal(true);
-    }
-
-    // Solve the subgoal of puzzle
-    private boolean solveSubgoal(boolean lastLoop) {
         while (true) {
             // Check interrupted
             if (Thread.interrupted()) {
-                return false;
+                return;
             }
 
             // Get the current puzzle state from the open list
             PuzzleState currPuzzleState = openList.poll();
-            if (lastLoop && currPuzzleState == null) {
+            if (currPuzzleState == null) {
                 solved = true;
                 foundSolution = false;
-                return false;
+                return;
             }
 
             // Add the current puzzle state to the closed list
@@ -439,25 +317,10 @@ public class Solver3 implements SolverResult, Runnable {
 
             // Check the goal
             if (currPuzzleState.isGoal()) {
-                if (lastLoop) {
-                    solved = true;
-                    foundSolution = true;
-                    saveSolution(currPuzzleState);
-                } else {
-                    if (subgoalTile % dimension != dimension - 1) {
-                        subgoalTile += 1;
-                    } else {
-                        subgoalTile += 2;
-                    }
-                    openListCount += openList.size();
-                    openList.clear();
-                    closedListCount += closedList.size();
-                    closedList.clear();
-                    currPuzzleState.updateManhattanDistance();
-                    openList.add(currPuzzleState);
-                }
-
-                return true;
+                solved = true;
+                foundSolution = true;
+                saveSolution(currPuzzleState);
+                return;
             }
 
             // Generate neighbours
@@ -491,7 +354,7 @@ public class Solver3 implements SolverResult, Runnable {
         if (openList == null) {
             throw new BadSolverException();
         }
-        return openListCount + openList.size();
+        return openList.size();
     }
 
     // Get the closed list size
@@ -499,7 +362,7 @@ public class Solver3 implements SolverResult, Runnable {
         if (closedList == null) {
             throw new BadSolverException();
         }
-        return closedListCount + closedList.size();
+        return closedList.size();
     }
 
     // Get the step size in a solution
@@ -535,8 +398,8 @@ public class Solver3 implements SolverResult, Runnable {
             throw new BadSolverException();
         }
 
-        String output = "Open List Size: " + getOpenListSize() + "\n";
-        output += "Closed List Size: " + getClosedListSize() + "\n";
+        String output = "Open List Size: " + openList.size() + "\n";
+        output += "Closed List Size: " + closedList.size() + "\n";
         output += "Number of Steps in a Solution: " + solution.size() + "\n";
         return output;
     }

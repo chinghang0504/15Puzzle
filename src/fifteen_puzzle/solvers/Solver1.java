@@ -1,4 +1,4 @@
-package fifteen_puzzle.solver;
+package fifteen_puzzle.solvers;
 
 import fifteen_puzzle.util.Direction;
 import fifteen_puzzle.util.Movement;
@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-public class Solver2 implements SolverResult, Runnable {
+public class Solver1 implements SolverResult, Runnable {
 
     private int dimension;
     private int emptyTile;
@@ -123,10 +123,6 @@ public class Solver2 implements SolverResult, Runnable {
             ArrayList<PuzzleState> output = new ArrayList<>(directions.length);
 
             for (Direction direction : directions) {
-                if (prevMovement != null && prevMovement.direction.equals(direction)) {
-                    continue;
-                }
-
                 Position nextPosition = emptyTilePosition.getNext(direction);
                 if (isValidPuzzlePosition(nextPosition)) {
                     output.add(new PuzzleState(this, nextPosition, direction));
@@ -189,7 +185,7 @@ public class Solver2 implements SolverResult, Runnable {
     }
 
     // Constructor
-    public Solver2(String path) {
+    public Solver1(String path) {
         Scanner scanner = loadPuzzleFile(path);
 
         loadPuzzleDimension(scanner);
