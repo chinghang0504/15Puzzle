@@ -9,7 +9,7 @@ public enum Direction {
 
     public final String symbol;
 
-    public static int size = Direction.values().length;
+    public static final int size = Direction.values().length;
 
     // Constructor
     Direction(String symbol) {

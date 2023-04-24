@@ -29,14 +29,14 @@ public class Position {
         }
     }
 
-    // Get the manhattan distance between two positions
-    public static int getManhattanDistance(Position p1, Position p2) {
-        return Math.abs(p1.row - p2.row) + Math.abs(p1.col - p2.col);
+    // Is in the boundary
+    public boolean isInBoundary(int dimension) {
+        return row >= 0 && row < dimension && col >= 0 && col < dimension;
     }
 
     // Get the manhattan distance between two positions
-    public static int getManhattanDistance(int row1, int col1, int row2, int col2) {
-        return Math.abs(row1 - row2) + Math.abs(col1 - col2);
+    public static int getManhattanDistance(Position p1, Position p2) {
+        return Math.abs(p1.row - p2.row) + Math.abs(p1.col - p2.col);
     }
 
     // Equals

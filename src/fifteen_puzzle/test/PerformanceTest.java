@@ -1,9 +1,6 @@
 package fifteen_puzzle.test;
 
-import fifteen_puzzle.solvers.Solver1;
-import fifteen_puzzle.solvers.Solver2;
-import fifteen_puzzle.solvers.Solver3;
-import fifteen_puzzle.util.SolverResult;
+import fifteen_puzzle.solver.*;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,7 +11,7 @@ public class PerformanceTest {
     public final long TIMEOUT_IN_MILLIS;
 
     public static final int START_PUZZLE_SOLVER_NUMBER = 1;
-    public static final int END_PUZZLE_SOLVER_NUMBER = 3;
+    public static final int END_PUZZLE_SOLVER_NUMBER = 4;
 
     private static final String RESULTS_DIRECTORY_NAME = "results";
     private static final String RESULT_FILE_NAME_1 = "puzzle_solver_result_";
@@ -83,8 +80,8 @@ public class PerformanceTest {
 
         for (String fileName : fileNames) {
             String path = TESTCASES_DIRECTORY_NAME + "/" + fileName;
-            SolverResult solverResult = getPuzzleSolver(path, puzzleSolverNumber);
-            Thread thread = new Thread((Runnable) solverResult);
+            Solver solver = getPuzzleSolver(path, puzzleSolverNumber);
+            Thread thread = new Thread(solver);
             long runningTime = 0;
 
             long start = System.currentTimeMillis();
@@ -97,13 +94,13 @@ public class PerformanceTest {
             boolean finished = runningTime < TIMEOUT_IN_MILLIS;
             double runningTimeInSeconds = runningTime / 1000D;
 
-            printResult(fileName, solverResult, finished, runningTimeInSeconds);
-            writeToCSV(fileName, solverResult, finished, runningTimeInSeconds, fileWriter, resultPath);
+            printResult(fileName, solver, finished, runningTimeInSeconds);
+            writeToCSV(fileName, solver, finished, runningTimeInSeconds, fileWriter, resultPath);
         }
     }
 
     // Get the specified puzzle solver
-    private SolverResult getPuzzleSolver(String path, int puzzleSolverNumber) {
+    private Solver getPuzzleSolver(String path, int puzzleSolverNumber) {
         switch (puzzleSolverNumber) {
             case 1:
                 return new Solver1(path);
@@ -111,21 +108,23 @@ public class PerformanceTest {
                 return new Solver2(path);
             case 3:
                 return new Solver3(path);
+            case 4:
+                return new Solver4(path);
             default:
                 return null;
         }
     }
 
     // Print the result
-    private void printResult(String fileName, SolverResult solverResult, boolean finished, double runningTimeInSeconds) {
+    private void printResult(String fileName, Solver solver, boolean finished, double runningTimeInSeconds) {
         String output = "File Name: " + fileName + "\n";
-        output += "Dimension: " + solverResult.getDimension() + "\n";
-        output += "Open List Size: " + solverResult.getOpenListSize();
+        output += "Dimension: " + solver.getDimension() + "\n";
+        output += "Open List Size: " + solver.getOpenListSize();
         output += finished ? "\n" : " (timeout)\n";
-        output += "Closed List Size: " + solverResult.getClosedListSize();
+        output += "Closed List Size: " + solver.getClosedListSize();
         output += finished ? "\n" : " (timeout)\n";
         output += "Number of Steps in a Solution: ";
-        output += finished ? solverResult.getSolutionStepSize() + "\n" : "NA (timeout)\n";
+        output += finished ? solver.getSolutionStepSize() + "\n" : "NA (timeout)\n";
         output += "Running Time: ";
         output += finished ? runningTimeInSeconds + " s\n": "NA (timeout)\n";
         output += "\n";
@@ -134,12 +133,12 @@ public class PerformanceTest {
     }
 
     // Write the result to the CSV file
-    private void writeToCSV(String fileName, SolverResult solverResult, boolean finished, double runningTimeInSeconds, FileWriter fileWriter, String resultPath) {
+    private void writeToCSV(String fileName, Solver solver, boolean finished, double runningTimeInSeconds, FileWriter fileWriter, String resultPath) {
         String output = fileName;
-        output += "," + solverResult.getDimension();
-        output += "," + solverResult.getOpenListSize();
-        output += "," + solverResult.getClosedListSize();
-        output += finished ? "," + solverResult.getSolutionStepSize() : ",";
+        output += "," + solver.getDimension();
+        output += "," + solver.getOpenListSize();
+        output += "," + solver.getClosedListSize();
+        output += finished ? "," + solver.getSolutionStepSize() : ",";
         output += finished ? "," + runningTimeInSeconds : ",";
         output += "\n";
 
